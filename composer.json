@@ -10,6 +10,9 @@
     ],
     "require": {},
     "autoload": {
+        "files": [
+            "Common.php"
+        ],
         "psr-4": {
             "Xzb\\Ci3\\Core\\": ""
         }
