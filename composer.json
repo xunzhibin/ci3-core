@@ -1,0 +1,21 @@
+{
+    "name": "xzb/ci3-core",
+    "description": "CI3 核心目录 优化包",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "xunzhibin",
+            "email": "xunzhibin@jnexpert.com"
+        }
+    ],
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Xzb\\Ci3\\Core\\": ""
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev"
+}
