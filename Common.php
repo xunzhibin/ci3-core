@@ -108,5 +108,21 @@ if ( ! function_exists('_exception_handler')) {
 
 		exit();
 	}
+}
 
+// ------------------------------------------------------------------------
+
+if (! function_exists('class_basename')) {
+    /**
+     * 获取 对象或类的 basename
+     * 
+     * @param string|object
+     * @return string
+     */
+    function class_basename($class)
+    {
+        $class = is_object($class) ? get_class($class) : $class;
+
+        return basename(str_replace('\\', '/', $class));
+    }
 }
