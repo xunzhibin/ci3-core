@@ -8,7 +8,11 @@
             "email": "xunzhibin@jnexpert.com"
         }
     ],
-    "require": {},
+    "require": {
+        "xzb/ci3-helpers": "dev-main",
+        "xzb/ci3-exception": "dev-main",
+        "xzb/ci3-database": "dev-main"
+    },
     "autoload": {
         "files": [
             "Common.php"

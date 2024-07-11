@@ -1,5 +1,14 @@
 <?php
 
+// HTTP 异常类
+use Xzb\Ci3\Exception\HttpExceptionInterface;
+use Xzb\Ci3\Exception\InternalServerErrorException;
+use Xzb\Ci3\Exception\NotFoundException;
+// 模型 异常类
+use Xzb\Ci3\Database\RecordsNotFoundException;
+// CI框架扩展 异常类
+use Xzb\Ci3\Core\Exceptions;
+
 // ------------------------------------------------------------------------
 
 if ( ! function_exists('show_error')) {
@@ -24,8 +33,7 @@ if ( ! function_exists('show_error')) {
 		}
 		$message = $heading . ': ' . $message;
 
-		// 抛出 运行 异常
-		throw new \RuntimeException($message, $status_code);
+		throw new InternalServerErrorException($message);
 	}
 }
 
@@ -47,7 +55,7 @@ if ( ! function_exists('show_404')) {
 		// 异常消息内容
 		$message = 'Not Found: ' . $page;
 
-		throw new \RuntimeException($message, 404);
+		throw new NotFoundException($message);
 	}
 }
 // --------------------------------------------------------------------
@@ -82,47 +90,52 @@ if ( ! function_exists('_exception_handler')) {
 	/**
 	 * 自定义 PHP函数 set_exception_handler 异常类处理
 	 *
-	 * @param	Exception	$exception
-	 * @return	void
+	 * @param \Exception $exception
+	 * @return void
 	 */
 	function _exception_handler($exception)
 	{
 		log_message('error', 'Severity: Error --> '.$exception->getMessage().' '.$exception->getFile().' '.$exception->getLine());
 
-		// // 不是 自定义 异常类
-		// if (! ($exception instanceof BaseException)) {
-		// 	$exception = new HttpException(
-		// 		$message = '',
-		// 		$exception->getCode() ?: 500,
-		// 		$exception
-		// 	);
-		// }
+		if (! $exception instanceof HttpExceptionInterface) {
+			// 记录未找到 异常类
+			if ($exception instanceof RecordsNotFoundException) {
+				$exception = new NotFoundException($exception->getMessage(), $exception->getCode(), $exception);
+			}
+			else {
+				$exception = new InternalServerErrorException($exception->getMessage(), $exception->getCode(), $exception);
+			}
+		}
 
-		// // 加载 输出类
-		// $output =& load_class('Output', 'core');
+		// 加载 CI框架 异常类
+		load_class('Exceptions', 'core');
 
-		// $output->response($exception)->_display();
-		
-        // $response = $this->renderException($request, $e);
-		
+		// 加载 输出类
+		load_class('Output', 'core')
+			// 设置 HTTP状态码
+			->set_status_header($exception->getHttpStatusCode())
+			// 设置 内容类型
+			->set_content_type('json')
+			// 显示输出
+			->_display(Exceptions::parseExceptionResponse($exception));
+
+        /*
+            1. PHP 运行异常 ---> 500
+            2. CI框架抛出异常 ---> 500
+            3. 模型异常
+                未找到 ---> 404
+                其它 ---> 500
+            4. 业务异常(ServiceException) --> 500
+            5. 验证异常(ValidationException) --> 422
+                缺少必要的参数 --> 必填
+                参数格式错误 --> 非数字、非字母、非字母数字、非手机号、非整形、非数组 等等
+                参数值不合法 --> 长度不符合、大小不符合、不在指定值内 等等
+            6. 身份验证异常(AuthenticationException) --> 401
+            7. 令牌不匹配异常(TokenMismatchException) --> 419
+        */
 
 		exit();
 	}
 }
 
 // ------------------------------------------------------------------------
-
-if (! function_exists('class_basename')) {
-    /**
-     * 获取 对象或类的 basename
-     * 
-     * @param string|object
-     * @return string
-     */
-    function class_basename($class)
-    {
-        $class = is_object($class) ? get_class($class) : $class;
-
-        return basename(str_replace('\\', '/', $class));
-    }
-}
