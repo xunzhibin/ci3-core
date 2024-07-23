@@ -7,6 +7,8 @@ namespace Xzb\Ci3\Core;
 use Throwable;
 // 模型 异常
 use Xzb\Ci3\Database\Exception\ModelExceptionInterface;
+// HTTP 异常
+use Xzb\Ci3\Exception\InternalServerErrorException;
 
 // 字符串 辅助函数
 use Xzb\Ci3\Helpers\Str;
@@ -41,8 +43,8 @@ class Exceptions extends \CI_Exceptions
 		}
 		$message = $heading . ' -> ' . $message;
 
-		// 抛出 运行 异常
-		throw new \RuntimeException($message, $status_code);
+		// 抛出 异常
+		throw new InternalServerErrorException($message);
 	}
 
 // --------------------------------------------------------------------
