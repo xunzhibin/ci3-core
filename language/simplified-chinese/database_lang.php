@@ -4,6 +4,9 @@
  */
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+/**
+ * 错误文言
+ */
 // 插入 缺少数据
 $lang['database_missing_insert_data'] = '创建 {field} 失败';
 // 插入 失败
@@ -27,7 +30,8 @@ $lang['database_model_missing_attribute_value'] = '服务器错误';
 // 模型 JSON编码失败
 $lang['database_model_json_encoding_failure'] = '服务器错误';
 
-// 自定义 模型类名称
-$lang['database_models'] = [
-	'custom-model-class-name' => 'custom-label'
-];
+/**
+ * 自定义 模型类名称
+ */
+$lang['database_label_custom-model-class-name'] = 'custom-label';
+

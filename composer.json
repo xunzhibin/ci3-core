@@ -14,12 +14,11 @@
         "xzb/ci3-database": "dev-main"
     },
     "autoload": {
-        "files": [
-            "Common.php"
-        ],
         "psr-4": {
             "Xzb\\Ci3\\Core\\": ""
-        }
+        },
+        "files": [
+        ]
     },
     "config": {
         "sort-packages": true
