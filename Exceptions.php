@@ -3,14 +3,17 @@
 // 命名空间
 namespace Xzb\Ci3\Core;
 
-
 // HTTP 异常类
-use Xzb\Ci3\Exception\HttpExceptionInterface;
-use Xzb\Ci3\Exception\InternalServerErrorException;
-use Xzb\Ci3\Exception\NotFoundException;
+use Xzb\Ci3\Exception\Http\{
+	HttpExceptionInterface,
+	InternalServerErrorException,
+	NotFoundException
+};
 // 模型 异常类
-use Xzb\Ci3\Database\Exception\RecordsNotFoundException;
-use Xzb\Ci3\Database\Exception\ModelExceptionInterface;
+use Xzb\Ci3\Database\Exception\{
+	ModelExceptionInterface,
+	RecordsNotFoundException
+};
 
 // 字符串 辅助函数
 use Xzb\Ci3\Helpers\Str;
@@ -41,9 +44,6 @@ class Exceptions extends \CI_Exceptions
 		throw new NotFoundException(
 			'Not Found: ' . $page
 		);
-		// $this->show_exception(
-		// 	new NotFoundException('Not Found: ' . $page)
-		// );
 	}
 
 	/**
@@ -104,7 +104,7 @@ class Exceptions extends \CI_Exceptions
 	 * @param \Throwable $e
 	 * @return void
 	 */
-	public function show_exception(Throwable $e)
+	public function show_exception($e)
 	{
 		$e = $this->prepareException($e);
 
@@ -115,7 +115,7 @@ class Exceptions extends \CI_Exceptions
 			// 设置 内容类型
 			->set_content_type('json')
 			// 显示输出
-			->_display($this->parseExceptionResponse($exception));
+			->_display($this->parseExceptionResponse($e));
 
         /*
             1. PHP 运行异常 ---> 500
@@ -147,7 +147,7 @@ class Exceptions extends \CI_Exceptions
 		}
 
 		// 记录未找到 异常类
-		if ($exception instanceof RecordsNotFoundException) {
+		if ($e instanceof RecordsNotFoundException) {
 			return new NotFoundException($e->getMessage(), $e->getCode(), $e);
 		}
 
@@ -180,13 +180,10 @@ class Exceptions extends \CI_Exceptions
 	{
 		// 模型 异常
 		if ($e->getPrevious() instanceof ModelExceptionInterface) {
-			$message = $this->parseModelExceptionErrorMessage($e->getPrevious());
-		}
-		else {
-			$message = $this->parseHttpExceptionErrorMessage($e);
+			return $this->parseModelExceptionErrorMessage($e->getPrevious());
 		}
 
-		return $message;
+		return $this->parseHttpExceptionErrorMessage($e);
 	}
 
 	/**
@@ -197,25 +194,15 @@ class Exceptions extends \CI_Exceptions
 	 */
 	protected function parseModelExceptionErrorMessage(ModelExceptionInterface $e): string
 	{
-		// 错误行 键名
-		$errorLineKey = str_replace('_exception', '', Str::snake(class_baseName($e)));
+		$lineKey = 'database_' . str_replace('_exception', '', Str::snake(class_baseName($e)));
+		$message = $this->parseErrorMessage($lineKey, ['database', 'custom_error_messages']);
 
-		// 模型名
-		$modelName = $e->getModel();
+		$lineKey = 'database_label_' . $e->getModel();
+		$replaceData[] = $this->parseErrorMessage($lineKey);
 
-		// 实例化 语言类
-		$lang = new Lang;
+		$search = [ '{field}', '{param}' ];
 
-		// 加载 语言文件
-		$lang->load(['database', 'custom_error_messages']);
-
-		// 错误信息
-		$message = $lang->line('database_' . $errorLineKey, false) ?: '';
-
-		// 模型 名称
-		$customModelName = $lang->line('database_label_' . $modelName, false);
-
-		return str_replace([ '{field}' ], [ $customModelName ], $message);
+		return str_replace($search, $replaceData, $message);
 	}
 
 	/**
@@ -226,13 +213,29 @@ class Exceptions extends \CI_Exceptions
 	 */
 	protected function parseHttpExceptionErrorMessage(Throwable $e): string
 	{
-		// 实例化 语言类
-		$lang = new Lang;
+		$lineKey = 'http_status_code_' . $e->getHttpStatusCode();
+
+		return $this->parseErrorMessage($lineKey, ['http_status_code', 'custom_error_messages']);
+	}
+
+	/**
+	 * 解析 错误信息
+	 * 
+	 * @param string $lineKey
+	 * @param array|string|null $file
+	 * @return string
+	 */
+	protected function parseErrorMessage(string $lineKey, $file = null): string
+	{
+		$lang =& load_class('Lang', 'core');
 
 		// 加载 语言文件
-		$lang->load(['http_status_code', 'custom_error_messages']);
+		if (! is_null($file)) {
+			$lang->load($file);
+		}
 
-		return $lang->line('http_status_code_' . $e->getHttpStatusCode(), false) ?: '';
+		// 错误信息
+		return $lang->line($lineKey, false) ?: '';
 	}
 
 }
