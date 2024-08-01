@@ -4,7 +4,7 @@
 namespace Xzb\Ci3\Core;
 
 // HTTP 异常类
-use Xzb\Ci3\Exception\Http\{
+use Xzb\Ci3\Core\HttpExceptions\{
 	HttpExceptionInterface,
 	InternalServerErrorException,
 	NotFoundException
@@ -25,8 +25,29 @@ use Throwable;
 /**
  * 异常类 扩展
  */
-class Exceptions extends \CI_Exceptions
+abstract class Exceptions extends \CI_Exceptions
 {
+    /**
+     * HTTP 状态码
+     * 
+     * @var int
+     */
+    protected $httpStatusCode;
+
+    /**
+     * 异常 响应 状态码
+     * 
+     * @param int $code
+     * @return $this
+     */
+    public function httpStatusCode(int $code)
+    {
+        $this->httpStatusCode = $code;
+
+        return $this;
+    }
+
+// ------------------------------- 重构 父 -------------------------------
 	/**
 	 * 404 Error Handler
 	 * 
@@ -111,7 +132,7 @@ class Exceptions extends \CI_Exceptions
 		// 加载 输出类
 		load_class('Output', 'core')
 			// 设置 HTTP状态码
-			->set_status_header($e->getHttpStatusCode())
+			->set_status_header($this->httpStatusCode ?: $e->getHttpStatusCode())
 			// 设置 内容类型
 			->set_content_type('json')
 			// 显示输出
@@ -133,7 +154,7 @@ class Exceptions extends \CI_Exceptions
         */
 	}
 
-// --------------------------------------------------------------------
+// ------------------------------- 异常解析扩展 -------------------------------
 	/**
 	 * 准备渲染异常
 	 * 

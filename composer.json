@@ -9,10 +9,8 @@
         }
     ],
     "require": {
-        "xzb/ci3-exception": "dev-main",
         "xzb/ci3-database": "dev-main",
-        "xzb/ci3-helpers": "dev-main",
-        "xzb/ci3-lang": "dev-main"
+        "xzb/ci3-helpers": "dev-main"
     },
     "autoload": {
         "psr-4": {
@@ -20,6 +18,9 @@
         },
         "files": [
         ]
+    },
+    "scripts": {
+        "post-install-cmd": "Xzb\\Ci3\\Core\\ComposerScripts::postInstallCmd"
     },
     "config": {
         "sort-packages": true
