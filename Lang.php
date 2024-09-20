@@ -54,7 +54,7 @@ abstract class Lang extends \CI_Lang
 			return;
 		}
 
-		$basepath = SYSDIR . 'language/' . $this->baseLanguage . '/' . $langFile;
+		$basepath = SYSDIR . '/language/' . $this->baseLanguage . '/' . $langFile;
 		if (($found = file_exists($basepath)) === TRUE) {
 			include($basepath);
 		}
@@ -72,14 +72,12 @@ abstract class Lang extends \CI_Lang
 			}
 		}
 		else {
-			if (get_instance() ?? false) {
-				foreach (get_instance()->load->get_package_paths(TRUE) as $packagePath) {
-					$packagePath .= 'language/' . $idiom . '/' . $langFile;
-					if ($basepath !== $packagePath && file_exists($packagePath)) {
-						include($packagePath);
-						$found = TRUE;
-						break;
-					}
+			foreach (load_class('Loader', 'core')->get_package_paths(TRUE) as $packagePath) {
+				$packagePath .= 'language/' . $idiom . '/' . $langFile;
+				if ($basepath !== $packagePath && file_exists($packagePath)) {
+					include($packagePath);
+					$found = TRUE;
+					break;
 				}
 			}
 		}

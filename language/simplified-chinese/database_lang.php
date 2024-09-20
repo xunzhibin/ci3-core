@@ -7,31 +7,22 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 /**
  * 错误文言
  */
-// 插入 缺少数据
-$lang['database_missing_insert_data'] = '创建 {field} 失败';
-// 插入 失败
-$lang['database_insert_failed'] = '创建 {field} 失败';
-// 更新 失败
-$lang['database_update_failed'] = '更新 {field} 失败';
-// 查询 失败
-$lang['database_select_failed'] = '查询 {field} 失败';
-// 查询 找到多条记录(记录不唯一)
-$lang['database_multiple_records_found'] = '查询 {field} 失败';
-// 查询 记录未找到
-$lang['database_records_not_found'] = '{field} 不存在';
-// DB删除 失败
-$lang['database_delete_failed'] = '删除 {field} 失败';
-// 模型 未找到
-$lang['database_model_not_found'] = '{field} 不存在';
-// 模型 缺少属性
-$lang['database_model_missing_attribute'] = '服务器错误';
-// 模型 缺少属性值
-$lang['database_model_missing_attribute_value'] = '服务器错误';
-// 模型 JSON编码失败
-$lang['database_model_json_encoding_failure'] = '服务器错误';
+// 插入(C) 失败
+$lang['database_insert_failed'] = '服务器错误';
+// 查询(R) 失败
+$lang['database_select_failed'] = '服务器错误';
+// 更新(U) 失败
+$lang['database_update_failed'] = '服务器错误';
+// 删除(D) 失败
+$lang['database_delete_failed'] = '服务器错误';
 
-/**
- * 自定义 模型类名称
- */
-$lang['database_label_custom-model-class-name'] = 'custom-label';
+// 缺少 插入 数据
+$lang['database_missing_insert_data'] = '服务器错误';
+// 缺少 更新 数据
+$lang['database_missing_update_data'] = '服务器错误';
+
+// 查询 记录不唯一
+$lang['database_multiple_records_found'] = '服务器错误';
+// 查询 记录未找到
+$lang['database_records_not_found'] = '服务器错误';
 

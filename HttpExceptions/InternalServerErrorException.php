@@ -15,11 +15,11 @@ class InternalServerErrorException extends HttpException
 	 */
 	protected $httpStatusCode = 500;
 
-	/**
-	 * 错误消息
-	 * 
-	 * @var string
-	 */
-	protected $errorMessage = 'Server Error';
+	// /**
+	//  * 错误消息
+	//  * 
+	//  * @var string
+	//  */
+	// protected $errorMessage = 'Server Error';
 
 }

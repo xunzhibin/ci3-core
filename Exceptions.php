@@ -9,10 +9,16 @@ use Xzb\Ci3\Core\HttpExceptions\{
 	InternalServerErrorException,
 	NotFoundException
 };
+
+// 数据库操作异常
+use Xzb\Ci3\Database\Query\{
+	QueryExceptionInterface,
+	RecordsNotFoundException
+};
+
 // 模型 异常类
 use Xzb\Ci3\Database\Exception\{
-	ModelExceptionInterface,
-	RecordsNotFoundException
+	ModelExceptionInterface
 };
 
 // 字符串 辅助函数
@@ -27,26 +33,6 @@ use Throwable;
  */
 abstract class Exceptions extends \CI_Exceptions
 {
-    /**
-     * HTTP 状态码
-     * 
-     * @var int
-     */
-    protected $httpStatusCode;
-
-    /**
-     * 异常 响应 状态码
-     * 
-     * @param int $code
-     * @return $this
-     */
-    public function httpStatusCode(int $code)
-    {
-        $this->httpStatusCode = $code;
-
-        return $this;
-    }
-
 // ------------------------------- 重构 父 -------------------------------
 	/**
 	 * 404 Error Handler
@@ -58,7 +44,7 @@ abstract class Exceptions extends \CI_Exceptions
 	 * @param bool $logError
 	 * @return void
 	 * 
-	 * @throws \Xzb\Ci3\Exception\NotFoundException
+	 * @throws \Xzb\Ci3\Core\HttpExceptions\NotFoundException
 	 */
 	public function show_404($page = '', $logError = TRUE)
 	{
@@ -81,7 +67,7 @@ abstract class Exceptions extends \CI_Exceptions
 	 * @param int $statusCode
 	 * @return void
 	 * 
-	 * @throws \Xzb\Ci3\Exception\InternalServerErrorException
+	 * @throws \Xzb\Ci3\Core\HttpExceptions\InternalServerErrorException
 	 */
 	public function show_error($heading, $message, $template = '', $statusCode = 500)
 	{
@@ -127,30 +113,32 @@ abstract class Exceptions extends \CI_Exceptions
 	 */
 	public function show_exception($e)
 	{
-		$e = $this->prepareException($e);
+		// 解析异常
+		$httpException = $this->prepareException($e);
 
-		// 加载 输出类
-		load_class('Output', 'core')
-			// 设置 HTTP状态码
-			->set_status_header($this->httpStatusCode ?: $e->getHttpStatusCode())
-			// 设置 内容类型
-			->set_content_type('json')
-			// 显示输出
-			->_display($this->parseExceptionResponse($e));
+		// 设置响应错误消息
+		$httpException->setErrorMessage(
+			// 解析异常错误消息
+			$this->parseExceptionErrorMessage($e, $httpException)
+		);
+
+		// 错误响应
+		load_class('Output', 'core')->errorResponse($httpException->toResponse(), $httpException->getHttpStatusCode());
 
         /*
             1. PHP 运行异常 ---> 500
             2. CI框架抛出异常 ---> 500
-            3. 模型异常
+			3. 数据库操作异常 ---> 500
+            4. 模型异常
                 未找到 ---> 404
                 其它 ---> 500
-            4. 业务异常(ServiceException) --> 500
-            5. 验证异常(ValidationException) --> 422
+            5. 业务异常(ServiceException) --> 500
+            6. 验证异常(ValidationException) --> 422
                 缺少必要的参数 --> 必填
                 参数格式错误 --> 非数字、非字母、非字母数字、非手机号、非整形、非数组 等等
                 参数值不合法 --> 长度不符合、大小不符合、不在指定值内 等等
-            6. 身份验证异常(AuthenticationException) --> 401
-            7. 令牌不匹配异常(TokenMismatchException) --> 419
+            7. 身份验证异常(AuthenticationException) --> 401
+            8. 令牌不匹配异常(TokenMismatchException) --> 419
         */
 	}
 
@@ -176,35 +164,39 @@ abstract class Exceptions extends \CI_Exceptions
 	}
 
 	/**
-	 * 解析 异常 响应
+	 * 解析 异常错误信息
 	 * 
 	 * @param \Throwable $e
+	 * @param \Xzb\Ci3\Core\HttpExceptions\HttpExceptionInterface $httpException
 	 * @return string
 	 */
-	protected function parseExceptionResponse(Throwable $e)
+	protected function parseExceptionErrorMessage(Throwable $e, HttpExceptionInterface $httpException): string
 	{
-		// 解析 响应错误信息
-		if ($message = $this->parseResponseErrorMessage($e)) {
-			$e->setErrorMessage($message);
+		// 数据库操作 异常
+		if ($e instanceof QueryExceptionInterface) {
+			return $this->parseDatabaseExceptionErrorMessage($e);
 		}
-
-		return (string)$e;
+		// 模型 异常
+		else if ($e instanceof ModelExceptionInterface) {
+			return $this->parseModelExceptionErrorMessage($e);
+		}
+		// HTTP 异常
+		else {
+			return $this->parseHttpExceptionErrorMessage($httpException);
+		}
 	}
 
 	/**
-	 * 解析 响应错误信息
+	 * 解析 数据库操作异常 错误信息
 	 * 
-	 * @param \Throwable $e
+	 * @param \Xzb\Ci3\Database\Query\QueryExceptionInterface
 	 * @return string
 	 */
-	protected function parseResponseErrorMessage(Throwable $e): string
+	protected function parseDatabaseExceptionErrorMessage(QueryExceptionInterface $e): string
 	{
-		// 模型 异常
-		if ($e->getPrevious() instanceof ModelExceptionInterface) {
-			return $this->parseModelExceptionErrorMessage($e->getPrevious());
-		}
+		$lineKey = 'database_' . str_replace('_exception', '', Str::snake(class_baseName($e)));
 
-		return $this->parseHttpExceptionErrorMessage($e);
+		return $this->parseErrorMessage($lineKey, ['database', 'custom_error_messages']);
 	}
 
 	/**
@@ -215,10 +207,10 @@ abstract class Exceptions extends \CI_Exceptions
 	 */
 	protected function parseModelExceptionErrorMessage(ModelExceptionInterface $e): string
 	{
-		$lineKey = 'database_' . str_replace('_exception', '', Str::snake(class_baseName($e)));
-		$message = $this->parseErrorMessage($lineKey, ['database', 'custom_error_messages']);
+		$lineKey = 'model_' . str_replace('_exception', '', Str::snake(class_baseName($e)));
+		$message = $this->parseErrorMessage($lineKey, ['model', 'custom_error_messages']);
 
-		$lineKey = 'database_label_' . $e->getModel();
+		$lineKey = 'model_label_' . $e->getModel();
 		$replaceData[] = $this->parseErrorMessage($lineKey);
 
 		$search = [ '{field}', '{param}' ];

@@ -6,7 +6,8 @@ namespace Xzb\Ci3\Core\HttpExceptions;
 /**
  * HTTP 异常 接口
  */
-interface HttpExceptionInterface
+// interface HttpExceptionInterface
+interface HttpExceptionInterface extends \Throwable
 {
 
 }

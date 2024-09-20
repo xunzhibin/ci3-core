@@ -15,11 +15,11 @@ class NotFoundException extends HttpException
 	 */
 	protected $httpStatusCode = 404;
 
-	/**
-	 * 错误消息
-	 * 
-	 * @var string
-	 */
-	protected $errorMessage = 'Not found';
+	// /**
+	//  * 错误消息
+	//  * 
+	//  * @var string
+	//  */
+	// protected $errorMessage = 'Not found';
 
 }
